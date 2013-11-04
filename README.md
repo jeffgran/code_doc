@@ -19,28 +19,46 @@ The ruby world already has a precedent for this: rake's descriptions. A typical 
 
 The call to `desc` defines a description for the task that follows. I think we can take this idea much, much further and create a robust system for documenting all of our code with code itself.
 
-This is a silly example of code_doc-documented code (this works in code_doc 0.0.1):
+This is a silly example of code_doc-documented code (this works in code_doc 0.0.2):
 
     class TestClass
 
       desc 'this is the #foo method. it does nothing.'
       arg :arg, 'this is the arg. it is not used.'
-      ret 'returns "foo"'
+      ret 'the string "foo"'
       def foo(arg)
         "foo"
+      end
+
+      desc 'this is the #bar method.'
+      arg :baz, "baz is a pointless argument. don't pass it in"
+      ret  'nothing useful'
+      def self.bar(baz=nil)
+        nil
       end
 
     end
 
     CodeDoc.for(TestClass)
 
-    #=> {    
-          :foo => {
-            :desc => "this is the #foo method. it does nothing.", 
-            :args => {
-              :arg => "this is the arg. it is not used."
-            }, 
-            :ret => "returns \"foo\""
+    #=> {
+          :instance_methods => {
+            :foo => {
+              :desc => "this is the #foo method. it does nothing.",
+              :args => {
+                :arg => "this is the arg. it is not used."
+              },
+              :ret => "the string \"foo\""
+            }
+          },
+          :singleton_methods => {
+            :bar => {
+              :desc => "this is the #bar method.",
+              :args => {
+                :baz => "baz is a pointless argument. don't pass it in"
+              },
+              :ret => "nothing useful"
+            }
           }
         }
 
@@ -56,13 +74,14 @@ One objection I can imagine is that this ends up using a lot more memory than th
 - `desc` to describe a method
 - `arg` to describe an argument for a method
 - `ret` to describe what a method returns
+- `desc`, `ret`, `arg` for class methods (singleton methods) too
 
 ## TODO
 
 - describe a class or a module
-- desc, ret, arg for class methods
 - implement "strict mode" to require documentation for all classes/methods
 - basic/default text and html formatter/outputter
+- track file and line numbers as well, to allow for "open this file at this line" type of behavior
 - ?
 
 ## Installation

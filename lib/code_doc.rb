@@ -4,47 +4,83 @@ require 'active_support/core_ext'
 require 'sender'
 require 'awesome_print'
 
+String.send(:alias_method, :undent, :strip_heredoc)
+
 module CodeDoc
   class DocumentationMissing < Exception;end
 
   def self.debug?
-    true
-    #false
+    @@debug ||= false
   end
+
+  def self.debug!
+    @@debug = true
+  end
+
+  def self.debug=(newval)
+    @@debug = newval
+  end
+
+  def self.debug!
+    @@debug = true
+  end
+  
 
   def self.for(klass)
     return {} unless klass.respond_to?(:code_doc_instance_methods)
-    klass.code_doc_instance_methods
+
+    return {
+      instance_methods: klass.code_doc_instance_methods,
+      singleton_methods: klass.code_doc_singleton_methods
+    }
   end
+  
 end
 
-String.send(:alias_method, :undent, :strip_heredoc)
 
-class Class
+class Module
+  attr_accessor :_code_doc_instance_methods
+  attr_accessor :_code_doc_singleton_methods
+
+  def is_singleton_class?
+    # thanks to Avdi Grimm @ http://devblog.avdi.org/2010/09/23/determining-singleton-class-status-in-ruby/
+    !(ancestors.include?(self))
+  end
+
+  def nearest_singleton_class
+    is_singleton_class? ? self : self.singleton_class
+  end
+  
   def desc(d)
-    @_code_doc_desc = d
+    if is_singleton_class?
+      @_code_doc_desc = d
+    else
+      obj = nearest_singleton_class
+      obj.desc(d)
+    end
   end
 
   def arg(name, description)
-    @_code_doc_args ||={}
-    @_code_doc_args[name] = description
+    if is_singleton_class?
+      @_code_doc_args ||={}
+      @_code_doc_args[name] = description
+    else
+      obj = self.singleton_class
+      obj.arg(name, description)
+    end
   end
 
   def ret(r)
-    @_code_doc_ret = r
+    if is_singleton_class?
+      @_code_doc_ret = r
+    else
+      obj = is_singleton_class? ? self : self.singleton_class
+      obj.ret(r)
+    end
   end
 
-  #-----------------------------------------------------------------------------
-  desc "hooks each time a method is added and keeps track of the documentation"
-  arg :name, "the name of the method that was just added"
-  #-----------------------------------------------------------------------------
-  def method_added(name)
-    return unless @_code_doc_desc || @_code_doc_args || @_code_doc_ret
-
-    calling_class = Kernel.backtrace[1][:object]
-    
-
-    # won't work.
+  def code_doc_document_method(opts)
+    # won't work...
     # maybe make users include a module into their classes to "prove" they own
     # it, so we can enforce it only in classes they own?
     #
@@ -52,11 +88,16 @@ class Class
     #   raise CodeDoc::DocumentationMissing, 
     #   "Must supply a description for #{calling_class}##{name}"
     # end
+    
+    return unless @_code_doc_desc || @_code_doc_args || @_code_doc_ret
+    calling_class = opts[:class]
+    name = opts[:name]
+    obj = self
 
     if CodeDoc.debug?
       puts "Documenting #{calling_class}##{name}"
       puts "  Description:"
-      puts "    #{@_code_doc_desc.undent}"
+      puts "    #{@_code_doc_desc}"
       puts "  Args:"
       if @_code_doc_args.blank?
         puts "    none"
@@ -70,33 +111,52 @@ class Class
     end
 
 
-    @_code_doc_instance_methods ||= {}
-    @_code_doc_instance_methods[name] = {
+    docinfo = {
       desc: @_code_doc_desc,
       args: @_code_doc_args,
       ret: @_code_doc_ret
     }
     
+    if opts[:scope] == :instance
+      obj._code_doc_instance_methods ||= {}
+      obj._code_doc_instance_methods[name] = docinfo
+    elsif opts[:scope] == :singleton
+      obj._code_doc_singleton_methods ||= {}
+      obj._code_doc_singleton_methods[name] = docinfo
+    end
 
     @_code_doc_desc = @_code_doc_args = @_code_doc_ret = nil
   end
-
+  
 
   #-----------------------------------------------------------------------------
-  desc <<-DESC
-    hooks each time a singleton method is added and keeps track of the 
-    documentation
-  DESC
+  desc "hooks each time a method is added and keeps track of the documentation"
+  arg :name, "the name of the method that was just added"
   #-----------------------------------------------------------------------------
-  def singleton_method_added(name)
-    # puts "singleton method_added: #{name}"
-    # puts "to: #{Kernel.backtrace[1][:object]}"#.instance_method(name)
+  def method_added(name)
+    nearest_singleton_class.code_doc_document_method({
+      name: name,
+      scope: :instance
+    })
   end
 
 
+  #-----------------------------------------------------------------------------
+  desc <<-DESC.undent
+    hooks each time a singleton method is added and keeps track of the 
+    documentation
+  DESC
+  arg :name, "the name of the method that was just added"
+  #-----------------------------------------------------------------------------
+  def singleton_method_added(name)
+    nearest_singleton_class.code_doc_document_method({
+      name: name,
+      scope: :singleton
+    })
+  end
 
   #-----------------------------------------------------------------------------
-  ret <<-DESC
+  ret <<-DESC.undent
     a hash whose keys are the symbols representing all the documented instance
     methods in this class, and whose values are the hash of documentation
     information for the corresponding methods. 
@@ -113,45 +173,12 @@ class Class
   DESC
   #-----------------------------------------------------------------------------
   def code_doc_instance_methods
-    @_code_doc_instance_methods ||= {}
+    self.nearest_singleton_class._code_doc_instance_methods || {}
   end
 
-  
+
+  def code_doc_singleton_methods
+    self.nearest_singleton_class._code_doc_singleton_methods || {}
+  end
 
 end
-
-
-
-
-
-class Foo
-
-  #-----------------------------------------------------------------------------
-  desc "this is the #bar method. it is similar to the #foo method"
-  arg :arg, "this is the arg"
-  ret "nil, because it just calls Kernel#puts"
-  #-----------------------------------------------------------------------------
-  def bar(arg)
-    puts "bar #{arg}!"
-  end
-
-  #-----------------------------------------------------------------------------
-  desc "this is the #cmethod method. it is similar to the #bar method"
-  #-----------------------------------------------------------------------------
-  def self.cmethod
-    "foo"
-  end
-  
-end
-
-# puts "name:"
-# puts Foo.instance_method(:bar).name.inspect
-
-# puts "arity:"
-# puts Foo.instance_method(:bar).arity.inspect
-
-# puts "parameters:"
-# puts Foo.instance_method(:bar).parameters.inspect
-
-# puts "location:"
-# puts Foo.instance_method(:bar).source_location.inspect
