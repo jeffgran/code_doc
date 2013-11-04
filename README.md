@@ -1,5 +1,7 @@
 # CodeDoc
 
+(CodeDoc is currently in the "proof-of-concept" stage. Hopefully I'll get back to implementing the rest of the idea Real Soon Now)
+
 There are already multiple documentation mechanisms for ruby. Most famous is RDoc(http://rdoc.sourceforge.net/). A notable newcomer is TomDoc (http://tomdoc.org/).
 
 So why write another one? Because I think the existing systems are all just variations of the same flawed idea: documentation in comments with special comment-syntax.
