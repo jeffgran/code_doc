@@ -8,9 +8,9 @@ Gem::Specification.new do |gem|
   gem.version       = CodeDoc::VERSION
   gem.authors       = ["Jeff Gran"]
   gem.email         = ["jeff.gran@openlogic.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Document your code using code.}
+  gem.summary       = %q{Why invent a meta-language to define documentation using crazy comments, when we already have a perfectly good language called Ruby?}
+  gem.homepage      = "http://github.com/jeffgran/code_doc"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
