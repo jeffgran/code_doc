@@ -30,6 +30,7 @@ module CodeDoc
     return {} unless klass.respond_to?(:code_doc_instance_methods)
 
     return {
+      desc: klass.code_doc_desc,
       instance_methods: klass.code_doc_instance_methods,
       singleton_methods: klass.code_doc_singleton_methods
     }
@@ -44,6 +45,7 @@ class Module
 
   def is_singleton_class?
     # thanks to Avdi Grimm @ http://devblog.avdi.org/2010/09/23/determining-singleton-class-status-in-ruby/
+    return false unless respond_to?(:ancestors)
     !(ancestors.include?(self))
   end
 
@@ -80,22 +82,21 @@ class Module
   end
 
   def code_doc_document_method(opts)
+    name = opts[:name]
+    obj = self
     # won't work...
     # maybe make users include a module into their classes to "prove" they own
     # it, so we can enforce it only in classes they own?
     #
     # if CodeDoc.strict? and @_code_doc_desc.blank?
     #   raise CodeDoc::DocumentationMissing, 
-    #   "Must supply a description for #{calling_class}##{name}"
+    #   "Must supply a description for #{obj}##{name}"
     # end
     
     return unless @_code_doc_desc || @_code_doc_args || @_code_doc_ret
-    calling_class = opts[:class]
-    name = opts[:name]
-    obj = self
 
     if CodeDoc.debug?
-      puts "Documenting #{calling_class}##{name}"
+      puts "Documenting #{obj}##{name}"
       puts "  Description:"
       puts "    #{@_code_doc_desc}"
       puts "  Args:"
@@ -181,4 +182,16 @@ class Module
     self.nearest_singleton_class._code_doc_singleton_methods || {}
   end
 
+end
+
+
+class Object
+  def desc(d)
+    @@_code_doc_desc = d
+  end
+
+  def code_doc_desc
+    @@_code_doc_desc ||= nil
+  end
+  
 end

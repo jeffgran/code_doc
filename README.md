@@ -20,7 +20,7 @@ end
 
 The call to `desc` defines a description for the task that follows. I think we can take this idea much, much further and create a robust system for documenting all of our code with code itself.
 
-This is a silly example of code_doc-documented code (this works in code_doc 0.0.2):
+This is a silly example of code_doc-documented code (this works as of code_doc 0.0.2):
 
 ```ruby
 class TestClass
@@ -67,7 +67,7 @@ CodeDoc.for(TestClass)
 
 Okay, so then what do you do with it? Anything you want! How beautiful is it that for each documented class and method in your code, you'll get a hash of all the information about those classes and methods? You are in ruby code with a hash of all the documentation information. Your only limitation is your imagination. You can output the docs as simply as `pp docs`, as above, or as complex as you want, with html markup, etc. It should be exceedingly easy for newcomers to this system to write new formatters. All you have to do is write a method that takes a hash and outputs whatever you want.
 
-Another possibility this opens up is validating the documentation. Want to make sure you don't forget to document any code? You could turn on a "strict mode" (not yet implemented in v 0.0.1) that would raise an error if you don't fully describe all the methods in all your classes.
+Another possibility this opens up is validating the documentation. Want to make sure you don't forget to document any code? You could turn on a "strict mode" (not yet implemented as of this writing) that would raise an error if you don't fully describe all the methods in all your classes.
 
 One objection I can imagine is that this ends up using a lot more memory than the comment-documentation, because you actually store all those doc strings in memory. That's true. But if this was a big concern for running in production, we could implement a "production mode" that turns all of the CodeDoc methods into null-methods that just return and don't do anything. Use the extra memory in dev and to generate the documentation, but don't sacrifice anything in production.
 
@@ -78,10 +78,11 @@ One objection I can imagine is that this ends up using a lot more memory than th
 - `arg` to describe an argument for a method
 - `ret` to describe what a method returns
 - `desc`, `ret`, `arg` for class methods (singleton methods) too
+- describe a class or a module itself by placing `desc` before the opening `class` or `module` line
 
 ## TODO
 
-- describe a class or a module
+- track modules that have been included/extended on a class, so we can render all available methods or render the proper hierarchy with each method where it originally came from.
 - implement "strict mode" to require documentation for all classes/methods
 - basic/default text and html formatter/outputter
 - track file and line numbers as well, to allow for "open this file at this line" type of behavior
