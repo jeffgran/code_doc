@@ -11,56 +11,59 @@ Here's an alternative. We already have a perfectly good language called Ruby, so
 This idea comes from lisp -- one of the coolest things about lisp is the way it is self-documenting. In emacs, for example, you can surf around the documentation for the program from within the program, while it's running. If you load up new code, you can see the documentation for that code immediately. If a function gets overwritten with a new signature, you can see the updated documentation (for the function's signature at least) in real-time.
 
 The ruby world already has a precedent for this: rake's descriptions. A typical rake task definition has two parts: the description and the task itself. Contrived example:
-
-    desc "prints the current date and time to the console"
-    task :datetime do
-      puts Time.now.to_s
-    end
+```ruby
+desc "prints the current date and time to the console"
+task :datetime do
+  puts Time.now.to_s
+end
+```
 
 The call to `desc` defines a description for the task that follows. I think we can take this idea much, much further and create a robust system for documenting all of our code with code itself.
 
 This is a silly example of code_doc-documented code (this works in code_doc 0.0.2):
 
-    class TestClass
+```ruby
+class TestClass
 
-      desc 'this is the #foo method. it does nothing.'
-      arg :arg, 'this is the arg. it is not used.'
-      ret 'the string "foo"'
-      def foo(arg)
-        "foo"
-      end
+  desc 'this is the #foo method. it does nothing.'
+  arg :arg, 'this is the arg. it is not used.'
+  ret 'the string "foo"'
+  def foo(arg)
+    "foo"
+  end
 
-      desc 'this is the #bar method.'
-      arg :baz, "baz is a pointless argument. don't pass it in"
-      ret  'nothing useful'
-      def self.bar(baz=nil)
-        nil
-      end
+  desc 'this is the #bar method.'
+  arg :baz, "baz is a pointless argument. don't pass it in"
+  ret  'nothing useful'
+  def self.bar(baz=nil)
+    nil
+  end
 
-    end
+end
 
-    CodeDoc.for(TestClass)
+CodeDoc.for(TestClass)
 
-    #=> {
-          :instance_methods => {
-            :foo => {
-              :desc => "this is the #foo method. it does nothing.",
-              :args => {
-                :arg => "this is the arg. it is not used."
-              },
-              :ret => "the string \"foo\""
-            }
+#=> {
+      :instance_methods => {
+        :foo => {
+          :desc => "this is the #foo method. it does nothing.",
+          :args => {
+            :arg => "this is the arg. it is not used."
           },
-          :singleton_methods => {
-            :bar => {
-              :desc => "this is the #bar method.",
-              :args => {
-                :baz => "baz is a pointless argument. don't pass it in"
-              },
-              :ret => "nothing useful"
-            }
-          }
+          :ret => "the string \"foo\""
         }
+      },
+      :singleton_methods => {
+        :bar => {
+          :desc => "this is the #bar method.",
+          :args => {
+            :baz => "baz is a pointless argument. don't pass it in"
+          },
+          :ret => "nothing useful"
+        }
+      }
+    }
+```
 
 Okay, so then what do you do with it? Anything you want! How beautiful is it that for each documented class and method in your code, you'll get a hash of all the information about those classes and methods? You are in ruby code with a hash of all the documentation information. Your only limitation is your imagination. You can output the docs as simply as `pp docs`, as above, or as complex as you want, with html markup, etc. It should be exceedingly easy for newcomers to this system to write new formatters. All you have to do is write a method that takes a hash and outputs whatever you want.
 
