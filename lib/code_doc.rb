@@ -31,6 +31,7 @@ module CodeDoc
 
     return {
       desc: klass.code_doc_desc,
+      included_modules: klass.code_doc_included_modules,
       instance_methods: klass.code_doc_instance_methods,
       singleton_methods: klass.code_doc_singleton_methods
     }
@@ -103,8 +104,8 @@ class Module
       if @_code_doc_args.blank?
         puts "    none"
       else
-        @_code_doc_args.each do |name, desc|
-          puts "    #{name}: #{desc}"
+        @_code_doc_args.each do |argname, argdesc|
+          puts "    #{argname}: #{argdesc}"
         end
       end
       puts "  Returns: #{@_code_doc_ret}"
@@ -139,6 +140,7 @@ class Module
       name: name,
       scope: :instance
     })
+    # there is no super
   end
 
 
@@ -154,6 +156,7 @@ class Module
       name: name,
       scope: :singleton
     })
+    super
   end
 
   #-----------------------------------------------------------------------------
@@ -180,6 +183,17 @@ class Module
 
   def code_doc_singleton_methods
     self.nearest_singleton_class._code_doc_singleton_methods || {}
+  end
+
+  alias _code_doc_include include
+  def include(m)
+    @@_code_doc_included_modules ||= []
+    @@_code_doc_included_modules << m
+    _code_doc_include(m)
+  end
+
+  def code_doc_included_modules
+    @@_code_doc_included_modules ||=[]
   end
 
 end

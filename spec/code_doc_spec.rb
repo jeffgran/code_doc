@@ -125,16 +125,22 @@ describe CodeDoc do
 
 
   
-  let(:class_with_included_module) do
-    class ClassWithModule
-      include mymodule
+  let(:class_with_module) do
+    module IncludedModule
+      def included_method(that)
+        "#{that*2}"
+      end
     end
+    class ClassWithModule
+      include IncludedModule
+    end
+    ClassWithModule
   end
 
   # hmmm... should we report them for the class, or just report the inherited module, and report it on the module?
-  # it 'records that a module has been inherited by a class' do
-  #   CodeDoc.for(ClassWithModule)[:included_modules].should eq([:MyModule])
-  # end
+  it 'records that a module has been inherited by a class' do
+    CodeDoc.for(class_with_module)[:included_modules].should include(IncludedModule)
+  end
 
   
 

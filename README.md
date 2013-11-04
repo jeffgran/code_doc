@@ -79,10 +79,10 @@ One objection I can imagine is that this ends up using a lot more memory than th
 - `ret` to describe what a method returns
 - `desc`, `ret`, `arg` for class methods (singleton methods) too
 - describe a class or a module itself by placing `desc` before the opening `class` or `module` line
+- track modules that have been included/extended on a class, so we can render all available methods or render the proper hierarchy with each method where it originally came from.
 
 ## TODO
 
-- track modules that have been included/extended on a class, so we can render all available methods or render the proper hierarchy with each method where it originally came from.
 - implement "strict mode" to require documentation for all classes/methods
 - basic/default text and html formatter/outputter
 - track file and line numbers as well, to allow for "open this file at this line" type of behavior
